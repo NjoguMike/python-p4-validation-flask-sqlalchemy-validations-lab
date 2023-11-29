@@ -12,6 +12,22 @@ class Author(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
     # Add validators 
+    @validates('name')
+    def validate_name(self, key, value):
+        if not value:
+            raise ValueError("Enter a valid name")
+        elif Author.query.filter_by(name=value).first():
+            raise ValueError("That author already exists!")
+        else:
+            return value
+        
+        
+    @validates('phone_number')
+    def validate_phone_number(self, key, number):
+        if len(number) != 10 or not number.isdigit():
+            raise ValueError("Phone number must be 10 digits.")
+        return number
+
 
     def __repr__(self):
         return f'Author(id={self.id}, name={self.name})'
@@ -28,6 +44,30 @@ class Post(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
     # Add validators  
+    @validates('title')
+    def validate_title(self, key, title):
+        if not title:
+            raise ValueError("Title field is required.")
+        clickbait = ["Won't Believe", "Secret", "Top", "Guess"]
+        if not any(substring in title for substring in clickbait):
+            raise ValueError("No clickbait found")
+        return title
+
+    @validates('content', 'summary')
+    def validate_length(self, key, string):
+        if( key == 'content'):
+            if len(string) < 250:
+                raise ValueError("Post content must be greater than or equal 250 characters long.")
+        if( key == 'summary'):
+            if len(string) > 250:
+                raise ValueError("Post summary must be less than or equal to 250 characters long.")
+        return string
+
+    @validates('category')
+    def validate_category(self, key, category):
+        if category != 'Fiction' and category != 'Non-Fiction':
+            raise ValueError("Category must be Fiction or Non-Fiction.")
+        return category
 
 
     def __repr__(self):
